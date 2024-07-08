@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, Union
 
 import kornia.augmentation as K
-from torch import nn
+from torch import Tensor, nn
 
 from methods.transforms.base import MultiViewTransform
 
@@ -147,3 +147,11 @@ class BYOLTransform(MultiViewTransform):
         view_1_transform = view_1_transform or BYOLView1Transform()
         view_2_transform = view_2_transform or BYOLView2Transform()
         super().__init__(view_transforms=[view_1_transform, view_2_transform])
+        self.shared_crop = K.RandomResizedCrop(size=(112, 112), scale=(0.5, 0.8))
+
+    def forward(self, images: Tensor) -> list[Tensor]:
+        # Apply each transform to the input in parallel to create different views
+        images = self.shared_crop(images)
+        return super().forward(images)
+        # views = [view_transform(images) for view_transform in self.view_transforms]
+        # return views
